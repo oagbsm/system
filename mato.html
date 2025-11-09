@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Products</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.80.0/dist/umd/supabase.min.js"></script>
+  <style>
+    :root {
+      --red: #e60000;
+      --black: #111;
+      --white: #fff;
+      --grey: #888;
+      --bg-light: #fff;
+      --bg-dark: #111;
+      --text-light: #111;
+      --text-dark: #fff;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-light);
+      color: var(--text-light);
+      transition: 0.3s;
+    }
+
+    body.dark {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    header {
+      background-color: var(--red);
+      padding: 20px;
+      text-align: center;
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--white);
+      position: relative;
+    }
+
+    .toggle-buttons {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .toggle-buttons button {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      background-color: #fff;
+      color: var(--red);
+      transition: 0.3s;
+    }
+
+    .toggle-buttons button:hover {
+      opacity: 0.8;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 15px;
+      justify-content: center;
+      background-color: #f5f5f5;
+      transition: 0.3s;
+    }
+
+    body.dark .controls {
+      background-color: #222;
+    }
+
+    .controls input, .controls select {
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
+
+    .category-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 10px;
+      padding: 0 15px;
+    }
+
+    .category-buttons button {
+      padding: 8px 15px;
+      background-color: var(--red);
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .category-buttons button:hover {
+      background-color: #ff3333;
+    }
+
+    .products-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 15px;
+      padding: 15px;
+      transition: 0.3s;
+    }
+
+    .list-view {
+      display: block;
+    }
+
+    .product-card {
+      background-color: #f9f9f9;
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+      border: 1px solid #eee;
+      transition: 0.3s;
+    }
+
+    body.dark .product-card {
+      background-color: #222;
+      border-color: #333;
+    }
+
+    .product-card:hover {
+      transform: scale(1.03);
+      box-shadow: 0 0 10px rgba(230,0,0,0.4);
+    }
+
+    .product-name {
+      font-weight: bold;
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+      color: inherit;
+    }
+
+    .product-price {
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: var(--red);
+    }
+
+    .product-note {
+      font-size: 0.8rem;
+      color: var(--grey);
+      display: block;
+      margin-top: 5px;
+    }
+
+    @media (max-width: 600px) {
+      .controls { flex-direction: column; align-items: center; }
+      .products-container { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+      .list-view .product-card { margin-bottom: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    Products
+    <div class="toggle-buttons">
+      <button id="mode-toggle">Dark Mode</button>
+      <button id="view-toggle">List View</button>
+    </div>
+  </header>
+
+  <div class="controls">
+    <input type="text" id="search" placeholder="Search products..." />
+    <select id="category-filter">
+      <option value="">All Categories</option>
+    </select>
+  </div>
+
+  <div class="category-buttons" id="category-buttons"></div>
+
+  <div class="products-container" id="products-container"></div>
+
+  <script>
+    const { createClient } = supabase;
+
+    const supabaseUrl = "https://ytqbwvqppawjtcpfozzo.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0cWJ3dnFwcGF3anRjcGZvenpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2OTQ5MTQsImV4cCI6MjA3ODI3MDkxNH0.G1Y-6FY1YNbueVPkctDU6UMDVahEa1kUvFi03tSOws0";
+
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+    const productsContainer = document.getElementById('products-container');
+    const searchInput = document.getElementById('search');
+    const categoryFilter = document.getElementById('category-filter');
+    const categoryButtonsContainer = document.getElementById('category-buttons');
+
+    const modeToggle = document.getElementById('mode-toggle');
+    const viewToggle = document.getElementById('view-toggle');
+
+    let allProducts = [];
+    let isDark = false;
+    let isListView = false;
+
+    async function fetchProducts() {
+      const { data, error } = await supabaseClient
+        .from('products')
+        .select('name, cost, price, note, category');
+
+      if (error) {
+        console.error(error);
+        productsContainer.innerHTML = '<p style="color:red;">Error loading products</p>';
+        return;
+      }
+
+      allProducts = data;
+      renderCategories(data);
+      renderProducts(data);
+    }
+
+    function renderCategories(products) {
+      const categories = [...new Set(products.map(p => p.category).filter(Boolean))];
+
+      categoryFilter.innerHTML = `<option value="">All Categories</option>` + 
+        categories.map(c => `<option value="${c}">${c}</option>`).join('');
+
+      categoryButtonsContainer.innerHTML = categories.map(c => 
+        `<button data-category="${c}">${c}</button>`
+      ).join('');
+
+      document.querySelectorAll('.category-buttons button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          categoryFilter.value = btn.dataset.category;
+          filterProducts();
+        });
+      });
+    }
+
+    function filterProducts() {
+      const searchText = searchInput.value.toLowerCase();
+      const selectedCategory = categoryFilter.value;
+      const filtered = allProducts.filter(p => {
+        const matchesSearch = p.name.toLowerCase().includes(searchText);
+        const matchesCategory = selectedCategory ? p.category === selectedCategory : true;
+        return matchesSearch && matchesCategory;
+      });
+      renderProducts(filtered);
+    }
+
+    function renderProducts(products) {
+      if (!products.length) {
+        productsContainer.innerHTML = '<p>No products found.</p>';
+        return;
+      }
+
+      productsContainer.innerHTML = products.map(p => `
+        <div class="product-card">
+          <div class="product-name">${p.name}</div>
+          <div class="product-price" data-cost="${p.cost}" data-price="${p.price}">
+            $${p.price.toFixed(2)}
+            ${p.note ? `<span class="product-note">(${p.note})</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+
+      if (isListView) {
+        productsContainer.classList.add('list-view');
+      } else {
+        productsContainer.classList.remove('list-view');
+      }
+
+      document.querySelectorAll('.product-price').forEach(el => {
+        el.addEventListener('click', () => {
+          const cost = parseFloat(el.dataset.cost);
+          const price = parseFloat(el.dataset.price);
+          const margin = ((price - cost) / price) * 100;
+          let color = margin > 30 ? 'green' : (margin >= 20 ? 'orange' : 'red');
+          el.textContent = `$${price.toFixed(2)} - Profit: ${margin.toFixed(1)}%`;
+          el.style.color = color;
+          if (el.querySelector('.product-note')) {
+            el.appendChild(el.querySelector('.product-note'));
+          }
+        });
+      });
+    }
+
+    searchInput.addEventListener('input', filterProducts);
+    categoryFilter.addEventListener('change', filterProducts);
+
+    modeToggle.addEventListener('click', () => {
+      isDark = !isDark;
+      document.body.classList.toggle('dark', isDark);
+      modeToggle.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+    });
+
+    viewToggle.addEventListener('click', () => {
+      isListView = !isListView;
+      renderProducts(allProducts);
+      viewToggle.textContent = isListView ? 'Grid View' : 'List View';
+    });
+
+    fetchProducts();
+  </script>
+</body>
+</html>
