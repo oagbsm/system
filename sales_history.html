@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sales History</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.80.0/dist/umd/supabase.min.js"></script>
+<style>
+body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9f9f9; color: #111; }
+header { background: #e60000; color: white; text-align: center; padding: 15px; font-size: 1.5rem; }
+.controls { display: flex; gap: 10px; justify-content: center; margin: 15px; }
+table { width: 95%; margin: auto; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; }
+th, td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; vertical-align: top; }
+th { background: #eee; }
+tr:hover { background: #fafafa; }
+.back-btn { background: #333; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; }
+.items-list { font-size: 0.9rem; color: #444; margin-top: 5px; }
+</style>
+</head>
+<body>
+<header>Sales History</header>
+<nav class="top-nav">
+  <div class="nav-left">🍅 Mato POS</div>
+  <div class="nav-links">
+    <a href="mato.html" id="nav-products">Products</a>
+    <a href="sales_history.html" id="nav-sales">Sales</a>
+    <a href="inventory.html" id="nav-inventory">Inventory</a>
+            <a href="crud.html" id="nav-inventory">EDIT</a>
+
+  </div>
+</nav>
+<div class="controls">
+  <input type="date" id="filter-date">
+  <input type="text" id="search" placeholder="Search buyer or notes">
+  <button class="back-btn" onclick="window.location.href='products.html'">Back</button>
+</div>
+
+<table id="sales-table">
+  <thead>
+    <tr>
+      <th>Date</th><th>Buyer</th><th>Revenue</th><th>Cost</th><th>Profit</th><th>Items</th><th>Notes</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+const { createClient } = supabase;
+const supabaseUrl = "https://ytqbwvqppawjtcpfozzo.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0cWJ3dnFwcGF3anRjcGZvenpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2OTQ5MTQsImV4cCI6MjA3ODI3MDkxNH0.G1Y-6FY1YNbueVPkctDU6UMDVahEa1kUvFi03tSOws0";
+const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+const tbody = document.querySelector('#sales-table tbody');
+const dateFilter = document.getElementById('filter-date');
+const searchInput = document.getElementById('search');
+let salesData = [];
+
+async function fetchSales() {
+  const { data, error } = await supabaseClient.from('sales').select('*').order('time', { ascending: false });
+  if (error) return alert("Error loading sales: " + error.message);
+  salesData = data;
+  renderSales(salesData);
+}
+
+function renderSales(list) {
+  tbody.innerHTML = list.map(s => {
+    let itemsHtml = "";
+    try {
+      const items = Array.isArray(s.items) ? s.items : JSON.parse(s.items);
+      itemsHtml = items.map(i => `• ${i.name}${i.weight && i.weight !== 1 ? ` (${i.weight}kg)` : ""}`).join("<br>");
+    } catch { itemsHtml = "—"; }
+
+    return `
+      <tr>
+        <td>${new Date(s.time).toLocaleString()}</td>
+        <td>****${s.buyer_last4 || ''}</td>
+        <td>$${Number(s.revenue).toFixed(2)}</td>
+        <td>$${Number(s.cost).toFixed(2)}</td>
+        <td>$${Number(s.profit).toFixed(2)}</td>
+        <td class="items-list">${itemsHtml}</td>
+        <td>${s.notes || ''}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterData() {
+  const date = dateFilter.value;
+  const term = searchInput.value.toLowerCase();
+  const filtered = salesData.filter(s => {
+    const matchDate = date ? s.time.startsWith(date) : true;
+    const matchSearch = !term || (s.notes?.toLowerCase().includes(term) || s.buyer_last4?.includes(term));
+    return matchDate && matchSearch;
+  });
+  renderSales(filtered);
+}
+
+dateFilter.addEventListener('input', filterData);
+searchInput.addEventListener('input', filterData);
+fetchSales();
+</script>
+</body>
+</html>

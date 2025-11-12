@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Product Inventory | CRUD Management</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.80.0/dist/umd/supabase.min.js"></script>
+
+<style>
+  body { font-family: Arial, sans-serif; background: #f8f9fa; margin: 0; padding: 30px; line-height: 1.5; }
+  h1 { text-align: center; color: #d32f2f; margin-bottom: 20px; }
+  .form-container, .search-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 20px; }
+  input, button { padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; }
+  button { background: #d32f2f; color: #fff; cursor: pointer; border: none; padding: 10px 16px; }
+  button:hover { background: #b71c1c; }
+  table { width: 100%; background: #fff; border-collapse: collapse; border-radius: 8px; overflow: hidden; }
+  th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; }
+  th { background: #d32f2f; color: white; text-transform: uppercase; font-size: 14px; }
+  .actions button { background: #1565c0; margin-right: 6px; }
+  .actions button:hover { background: #0d47a1; }
+  .actions .delete-btn { background: #e53935; }
+  .actions .delete-btn:hover { background: #b71c1c; }
+
+  /* Navbar */
+  .top-nav { display: flex; justify-content: space-between; align-items: center; background: #e60000; color: white; padding: 10px 20px; position: sticky; top: 0; z-index: 1000; }
+  .nav-left { font-size: 1.3rem; font-weight: bold; }
+  .nav-links { display: flex; gap: 18px; }
+  .nav-links a { color: white; text-decoration: none; font-weight: bold; padding-bottom: 3px; }
+  .nav-links a.active { border-bottom: 2px solid #fff; }
+</style>
+
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="top-nav">
+  <div class="nav-left">🍅 Mato POS</div>
+  <div class="nav-links">
+    <a href="mato.html" id="nav-products">Products</a>
+    <a href="sales_history.html" id="nav-sales">Sales</a>
+    <a href="inventory.html" id="nav-inventory">Inventory</a>
+    <a href="crud.html" id="nav-edit">Edit</a>
+  </div>
+</nav>
+
+<h1>Product Inventory Management</h1>
+
+<div class="form-container">
+  <input id="name" placeholder="Product Name">
+  <input id="category" placeholder="Category">
+  <input id="cost" type="number" placeholder="Cost Price">
+  <input id="price" type="number" placeholder="Selling Price">
+  <input id="note" placeholder="Notes (Optional)">
+  <input id="stock" type="number" placeholder="Initial Stock">
+  <button id="addBtn">Add Product</button>
+</div>
+
+<div class="search-container">
+  <input id="search" placeholder="Search Products...">
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Category</th>
+      <th>Cost</th>
+      <th>Price</th>
+      <th>Profit %</th>
+      <th>Stock</th>
+      <th>Note</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="products"></tbody>
+</table>
+
+<script>
+  const { createClient } = supabase;
+  const supabaseUrl = "https://ytqbwvqppawjtcpfozzo.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0cWJ3dnFwcGF3anRjcGZvenpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2OTQ5MTQsImV4cCI6MjA3ODI3MDkxNH0.G1Y-6FY1YNbueVPkctDU6UMDVahEa1kUvFi03tSOws0";
+  const db = createClient(supabaseUrl, supabaseKey);
+
+  const productsTable = document.getElementById('products');
+  const searchInput = document.getElementById('search');
+
+  const nameInput = document.getElementById("name");
+  const categoryInput = document.getElementById("category");
+  const costInput = document.getElementById("cost");
+  const priceInput = document.getElementById("price");
+  const noteInput = document.getElementById("note");
+  const stockInput = document.getElementById("stock");
+  const addBtn = document.getElementById("addBtn");
+
+  // Highlight active nav
+  document.getElementById("nav-edit").classList.add("active");
+
+  async function fetchProducts(query="") {
+    let request = db.from("products").select("*").order("id", { ascending: true });
+    if (query.trim() !== "") request = request.ilike("name", `%${query}%`);
+    const { data, error } = await request;
+    if (error) return console.error(error);
+
+    productsTable.innerHTML = data.map(p => `
+      <tr>
+        <td>${p.name}</td>
+        <td>${p.category}</td>
+        <td>$${p.cost}</td>
+        <td>$${p.price}</td>
+        <td>${((p.price - p.cost)/p.cost*100).toFixed(1)}%</td>
+        <td>${p.stock ?? 0} 
+          <button onclick="adjustStock(${p.id}, ${p.stock}, true)">+ Add</button>
+          <button onclick="adjustStock(${p.id}, ${p.stock}, false)">- Remove</button>
+        </td>
+        <td>${p.note || ""}</td>
+        <td class="actions">
+          <button onclick="editProduct(${p.id}, '${p.name}', '${p.category}', ${p.cost}, ${p.price}, '${p.note || ""}')">Edit</button>
+          <button class="delete-btn" onclick="deleteProduct(${p.id})">Delete</button>
+        </td>
+      </tr>
+    `).join("");
+  }
+
+  async function addProduct() {
+    const name = nameInput.value.trim();
+    const category = categoryInput.value.trim();
+    const cost = parseFloat(costInput.value);
+    const price = parseFloat(priceInput.value);
+    const note = noteInput.value.trim();
+    const stock = parseFloat(stockInput.value) || 0;
+
+    if (!name || !category || !cost || !price) return alert("Fill all required fields!");
+
+    const { error } = await db.from("products").insert([{ name, category, cost, price, note, stock }]);
+    if (error) return alert("Error: " + error.message);
+
+    nameInput.value = categoryInput.value = costInput.value = priceInput.value = noteInput.value = stockInput.value = "";
+    fetchProducts();
+  }
+
+  async function editProduct(id, name, category, cost, price, note) {
+    const newName = prompt("Name:", name);
+    const newCategory = prompt("Category:", category);
+    const newCost = parseFloat(prompt("Cost:", cost));
+    const newPrice = parseFloat(prompt("Price:", price));
+    const newNote = prompt("Note:", note);
+
+    const { error } = await db.from("products").update({ name: newName, category: newCategory, cost: newCost, price: newPrice, note: newNote }).eq("id", id);
+    if (error) return alert("Error updating: " + error.message);
+
+    fetchProducts();
+  }
+
+  async function deleteProduct(id) {
+    if (!confirm("Delete this product?")) return;
+    const { error } = await db.from("products").delete().eq("id", id);
+    if (error) return alert("Error deleting: " + error.message);
+
+    fetchProducts();
+  }
+
+  async function adjustStock(id, currentStock, add=true) {
+    const qty = parseFloat(prompt(`Enter quantity to ${add ? "add" : "remove"}:`));
+    if (!qty || qty <= 0) return alert("Invalid quantity");
+
+    const newStock = add ? currentStock + qty : Math.max(0, currentStock - qty);
+    const { error } = await db.from("products").update({ stock: newStock }).eq("id", id);
+    if (error) return alert("Error updating stock: " + error.message);
+
+    fetchProducts();
+  }
+
+  addBtn.addEventListener("click", addProduct);
+  searchInput.addEventListener("input", (e) => fetchProducts(e.target.value));
+
+  fetchProducts();
+</script>
+</body>
+</html>

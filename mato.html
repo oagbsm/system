@@ -11,300 +11,260 @@
       --black: #111;
       --white: #fff;
       --grey: #888;
-      --bg-light: #fff;
-      --bg-dark: #111;
-      --text-light: #111;
-      --text-dark: #fff;
     }
+    body { font-family: Arial, sans-serif; margin: 0; background: #fff; color: #111; }
+    header { background-color: var(--red); padding: 15px 20px; text-align: center; font-size: 1.8rem; font-weight: bold; color: white; }
+    #daily-summary { background: #f5f5f5; padding: 10px 20px; text-align: center; font-weight: bold; }
 
-    body {
-      font-family: 'Arial', sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: var(--bg-light);
-      color: var(--text-light);
-      transition: 0.3s;
-    }
+    .controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 10px; background: #f9f9f9; }
+    .category-btn { padding: 8px 14px; border: none; border-radius: 8px; cursor: pointer; background: #ddd; font-weight: bold; }
+    .category-btn.active { background: var(--red); color: white; }
+    #search { padding: 8px; border-radius: 6px; border: 1px solid #ccc; min-width: 200px; }
 
-    body.dark {
-      background-color: var(--bg-dark);
-      color: var(--text-dark);
-    }
+    .products-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; padding: 15px; }
+    .product-card { background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 15px; text-align: center; }
+    .product-name { font-weight: bold; margin-bottom: 8px; }
+    .product-price { color: var(--red); font-weight: bold; cursor: pointer; }
+    .add-to-cart { margin-top: 10px; background: var(--red); color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; width: 100%; }
 
-    header {
-      background-color: var(--red);
-      padding: 20px;
-      text-align: center;
-      font-size: 2rem;
-      font-weight: bold;
-      color: var(--white);
-      position: relative;
-    }
+    #checkout-btn { position: fixed; bottom: 20px; right: 20px; background: var(--red); color: white; padding: 14px 18px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; }
+    #view-sales-btn { position: fixed; bottom: 20px; left: 20px; background: #333; color: white; padding: 14px 18px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; }
 
-    .toggle-buttons {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      display: flex;
-      gap: 10px;
-    }
-
-    .toggle-buttons button {
-      padding: 6px 12px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 0.8rem;
-      background-color: #fff;
-      color: var(--red);
-      transition: 0.3s;
-    }
-
-    .toggle-buttons button:hover {
-      opacity: 0.8;
-    }
-
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      padding: 15px;
-      justify-content: center;
-      background-color: #f5f5f5;
-      transition: 0.3s;
-    }
-
-    body.dark .controls {
-      background-color: #222;
-    }
-
-    .controls input, .controls select {
-      padding: 10px;
-      font-size: 1rem;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      outline: none;
-    }
-
-    .category-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-      margin-bottom: 10px;
-      padding: 0 15px;
-    }
-
-    .category-buttons button {
-      padding: 8px 15px;
-      background-color: var(--red);
-      color: #fff;
-      border: none;
-      border-radius: 20px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    .category-buttons button:hover {
-      background-color: #ff3333;
-    }
-
-    .products-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 15px;
-      padding: 15px;
-      transition: 0.3s;
-    }
-
-    .list-view {
-      display: block;
-    }
-
-    .product-card {
-      background-color: #f9f9f9;
-      border-radius: 10px;
-      padding: 15px;
-      text-align: center;
-      border: 1px solid #eee;
-      transition: 0.3s;
-    }
-
-    body.dark .product-card {
-      background-color: #222;
-      border-color: #333;
-    }
-
-    .product-card:hover {
-      transform: scale(1.03);
-      box-shadow: 0 0 10px rgba(230,0,0,0.4);
-    }
-
-    .product-name {
-      font-weight: bold;
-      margin-bottom: 8px;
-      font-size: 1.1rem;
-      color: inherit;
-    }
-
-    .product-price {
-      font-size: 1.2rem;
-      cursor: pointer;
-      color: var(--red);
-    }
-
-    .product-note {
-      font-size: 0.8rem;
-      color: var(--grey);
-      display: block;
-      margin-top: 5px;
-    }
-
-    @media (max-width: 600px) {
-      .controls { flex-direction: column; align-items: center; }
-      .products-container { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
-      .list-view .product-card { margin-bottom: 10px; }
-    }
+    #confirm-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; }
+    #confirm-box { background: #fff; padding: 20px 30px; border-radius: 10px; width: 300px; text-align: center; }
+    #confirm-box h3 { margin-top: 0; color: var(--red); }
+    .confirm-btns { margin-top: 20px; display: flex; justify-content: space-between; }
+    .confirm-btns button { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; }
+    .yes-btn { background: var(--red); color: white; }
+    .no-btn { background: #ccc; }
   </style>
+  <nav class="top-nav">
+  <div class="nav-left">🍅 Mato POS</div>
+  <div class="nav-links">
+    <a href="mato.html" id="nav-products">Products</a>
+    <a href="sales_history.html" id="nav-sales">Sales</a>
+    <a href="inventory.html" id="nav-inventory">Inventory</a>
+        <a href="crud.html" id="nav-inventory">EDIT</a>
+
+  </div>
+</nav>
 </head>
 <body>
-  <header>
-    Products
-    <div class="toggle-buttons">
-      <button id="mode-toggle">Dark Mode</button>
-      <button id="view-toggle">List View</button>
-    </div>
-  </header>
+  <header>Products</header>
+  <div id="daily-summary">Loading daily totals...</div>
 
-  <div class="controls">
-    <input type="text" id="search" placeholder="Search products..." />
-    <select id="category-filter">
-      <option value="">All Categories</option>
-    </select>
+  <div class="controls" id="category-controls">
+    <button class="category-btn active" data-category="all">All</button>
+    <!-- categories will populate here -->
+    <input type="text" id="search" placeholder="Search..." />
   </div>
-
-  <div class="category-buttons" id="category-buttons"></div>
 
   <div class="products-container" id="products-container"></div>
 
-  <script>
-    const { createClient } = supabase;
+  <button id="view-sales-btn">View Sales History</button>
+  <button id="checkout-btn">Checkout (0)</button>
 
-    const supabaseUrl = "https://ytqbwvqppawjtcpfozzo.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0cWJ3dnFwcGF3anRjcGZvenpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2OTQ5MTQsImV4cCI6MjA3ODI3MDkxNH0.G1Y-6FY1YNbueVPkctDU6UMDVahEa1kUvFi03tSOws0";
+  <!-- Confirmation Modal -->
+  <div id="confirm-modal">
+    <div id="confirm-box">
+      <h3>Confirm Checkout</h3>
+      <p id="confirm-details"></p>
+      <div class="confirm-btns">
+        <button class="no-btn" id="cancel-confirm">Cancel</button>
+        <button class="yes-btn" id="confirm-checkout">Confirm</button>
+      </div>
+    </div>
+  </div>
 
-    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+<script>
+const { createClient } = supabase;
+const supabaseUrl = "https://ytqbwvqppawjtcpfozzo.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0cWJ3dnFwcGF3anRjcGZvenpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2OTQ5MTQsImV4cCI6MjA3ODI3MDkxNH0.G1Y-6FY1YNbueVPkctDU6UMDVahEa1kUvFi03tSOws0";
+const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
-    const productsContainer = document.getElementById('products-container');
-    const searchInput = document.getElementById('search');
-    const categoryFilter = document.getElementById('category-filter');
-    const categoryButtonsContainer = document.getElementById('category-buttons');
+let products = [];
+let cart = [];
+let currentCategory = "all";
 
-    const modeToggle = document.getElementById('mode-toggle');
-    const viewToggle = document.getElementById('view-toggle');
+const dailySummary = document.getElementById('daily-summary');
+const productsContainer = document.getElementById('products-container');
+const categoryControls = document.getElementById('category-controls');
+const confirmModal = document.getElementById('confirm-modal');
+const confirmDetails = document.getElementById('confirm-details');
+const confirmYes = document.getElementById('confirm-checkout');
+const confirmNo = document.getElementById('cancel-confirm');
 
-    let allProducts = [];
-    let isDark = false;
-    let isListView = false;
+async function fetchProducts() {
+  const { data } = await supabaseClient.from('products').select('name, cost, price, category, note');
+  products = data || [];
+  renderCategoryButtons();
+  renderProducts(products);
+}
 
-    async function fetchProducts() {
-      const { data, error } = await supabaseClient
-        .from('products')
-        .select('name, cost, price, note, category');
-
-      if (error) {
-        console.error(error);
-        productsContainer.innerHTML = '<p style="color:red;">Error loading products</p>';
-        return;
-      }
-
-      allProducts = data;
-      renderCategories(data);
-      renderProducts(data);
-    }
-
-    function renderCategories(products) {
-      const categories = [...new Set(products.map(p => p.category).filter(Boolean))];
-
-      categoryFilter.innerHTML = `<option value="">All Categories</option>` + 
-        categories.map(c => `<option value="${c}">${c}</option>`).join('');
-
-      categoryButtonsContainer.innerHTML = categories.map(c => 
-        `<button data-category="${c}">${c}</button>`
-      ).join('');
-
-      document.querySelectorAll('.category-buttons button').forEach(btn => {
-        btn.addEventListener('click', () => {
-          categoryFilter.value = btn.dataset.category;
-          filterProducts();
-        });
-      });
-    }
-
-    function filterProducts() {
-      const searchText = searchInput.value.toLowerCase();
-      const selectedCategory = categoryFilter.value;
-      const filtered = allProducts.filter(p => {
-        const matchesSearch = p.name.toLowerCase().includes(searchText);
-        const matchesCategory = selectedCategory ? p.category === selectedCategory : true;
-        return matchesSearch && matchesCategory;
-      });
-      renderProducts(filtered);
-    }
-
-    function renderProducts(products) {
-      if (!products.length) {
-        productsContainer.innerHTML = '<p>No products found.</p>';
-        return;
-      }
-
-      productsContainer.innerHTML = products.map(p => `
-        <div class="product-card">
-          <div class="product-name">${p.name}</div>
-          <div class="product-price" data-cost="${p.cost}" data-price="${p.price}">
-            $${p.price.toFixed(2)}
-            ${p.note ? `<span class="product-note">(${p.note})</span>` : ''}
-          </div>
-        </div>
-      `).join('');
-
-      if (isListView) {
-        productsContainer.classList.add('list-view');
-      } else {
-        productsContainer.classList.remove('list-view');
-      }
-
-      document.querySelectorAll('.product-price').forEach(el => {
-        el.addEventListener('click', () => {
-          const cost = parseFloat(el.dataset.cost);
-          const price = parseFloat(el.dataset.price);
-          const margin = ((price - cost) / price) * 100;
-          let color = margin > 30 ? 'green' : (margin >= 20 ? 'orange' : 'red');
-          el.textContent = `$${price.toFixed(2)} - Profit: ${margin.toFixed(1)}%`;
-          el.style.color = color;
-          if (el.querySelector('.product-note')) {
-            el.appendChild(el.querySelector('.product-note'));
-          }
-        });
-      });
-    }
-
-    searchInput.addEventListener('input', filterProducts);
-    categoryFilter.addEventListener('change', filterProducts);
-
-    modeToggle.addEventListener('click', () => {
-      isDark = !isDark;
-      document.body.classList.toggle('dark', isDark);
-      modeToggle.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+function renderCategoryButtons() {
+  const uniqueCategories = [...new Set(products.map(p => p.category).filter(Boolean))];
+  uniqueCategories.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.textContent = cat;
+    btn.classList.add('category-btn');
+    btn.dataset.category = cat.toLowerCase();
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentCategory = cat.toLowerCase();
+      filterProducts();
     });
+    categoryControls.insertBefore(btn, document.getElementById('search'));
+  });
+}
 
-    viewToggle.addEventListener('click', () => {
-      isListView = !isListView;
-      renderProducts(allProducts);
-      viewToggle.textContent = isListView ? 'Grid View' : 'List View';
+function filterProducts() {
+  const searchTerm = document.getElementById('search').value.toLowerCase();
+  let filtered = products;
+  if (currentCategory !== "all") {
+    filtered = filtered.filter(p => p.category && p.category.toLowerCase() === currentCategory);
+  }
+  if (searchTerm) {
+    filtered = filtered.filter(p => p.name.toLowerCase().includes(searchTerm));
+  }
+  renderProducts(filtered);
+}
+
+function renderProducts(list) {
+  productsContainer.innerHTML = list.map(p => `
+    <div class="product-card">
+      <div class="product-name">${p.name}</div>
+      <div class="product-price" data-cost="${p.cost}" data-price="${p.price}">
+        <span class="price-value">$${p.price.toFixed(2)}</span>
+      </div>
+      ${p.note ? `<small>${p.note}</small><br>` : ""}
+      <button class="add-to-cart" data-name="${p.name}" data-cost="${p.cost}" data-price="${p.price}" data-category="${p.category || ''}">Add to Cart</button>
+    </div>
+  `).join('');
+
+  document.querySelectorAll('.product-price').forEach(el => {
+    el.addEventListener('click', () => {
+      const cost = parseFloat(el.dataset.cost);
+      const price = parseFloat(el.dataset.price);
+      const margin = ((price - cost) / price) * 100;
+      const span = el.querySelector('.price-value');
+      span.textContent = `$${price.toFixed(2)} | Profit: ${margin.toFixed(1)}%`;
+      span.style.color = margin > 30 ? 'green' : margin >= 20 ? 'orange' : 'red';
     });
+  });
 
-    fetchProducts();
-  </script>
+  document.querySelectorAll('.add-to-cart').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const name = btn.dataset.name;
+      const cost = parseFloat(btn.dataset.cost);
+      const price = parseFloat(btn.dataset.price);
+      const category = btn.dataset.category.toLowerCase();
+
+      let weight = 1;
+      if (category === 'fruit' || category === 'qudaar') {
+        const w = parseFloat(prompt(`Enter weight (kg) for ${name}:`, "1"));
+        if (!w || w <= 0) return alert("Invalid weight.");
+        weight = w;
+      }
+
+      cart.push({
+        name,
+        category,
+        weight,
+        cost: cost * weight,
+        price: price * weight
+      });
+      updateCartButton();
+    });
+  });
+}
+
+function updateCartButton() {
+  document.getElementById('checkout-btn').textContent = `Checkout (${cart.length})`;
+}
+
+document.getElementById('search').addEventListener('input', filterProducts);
+
+document.getElementById('checkout-btn').addEventListener('click', async () => {
+  if (!cart.length) return alert("Cart is empty!");
+
+  // Prompt buyer info
+  const buyerDigits = prompt("Enter buyer's last 4 digits (card or phone):")?.trim();
+  if (!buyerDigits) return alert("Checkout cancelled — missing last 4 digits.");
+
+  const notes = prompt("Add any notes or comments (optional):")?.trim() || "";
+
+  // Calculate revenue, cost, profit
+  const revenue = cart.reduce((s, i) => s + i.price, 0);
+  const cost = cart.reduce((s, i) => s + i.cost, 0);
+  const profit = revenue - cost;
+
+  const record = {
+    time: new Date().toISOString(),
+    buyer_last4: buyerDigits,
+    notes,
+    items: cart,
+    revenue,
+    cost,
+    profit
+  };
+
+  // Save to sales history
+  const { error: salesError } = await supabaseClient.from('sales').insert([record]);
+  if (salesError) return alert("Error logging sale: " + salesError.message);
+
+  // **Deduct sold quantities from products stock**
+  for (const item of cart) {
+    const { data: productData, error: prodError } = await supabaseClient
+      .from('products')
+      .select('id, stock')
+      .eq('name', item.name)
+      .single();
+
+    if (prodError) {
+      console.error(`Error fetching product ${item.name}:`, prodError.message);
+      continue;
+    }
+
+    const newStock = (productData.stock ?? 0) - (item.quantity ?? 1); // quantity defaults to 1
+    const { error: updateError } = await supabaseClient
+      .from('products')
+      .update({ stock: newStock })
+      .eq('id', productData.id);
+
+    if (updateError) console.error(`Error updating stock for ${item.name}:`, updateError.message);
+  }
+
+  alert(`✅ Checkout Complete\nRevenue: $${revenue.toFixed(2)}\nCost: $${cost.toFixed(2)}\nProfit: $${profit.toFixed(2)}`);
+
+  cart = [];
+  updateCartButton();
+  fetchProducts(); // reload products and inventory display
+});
+
+async function fetchDailySummary() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const isoStart = today.toISOString();
+
+  const { data, error } = await supabaseClient
+    .from('sales')
+    .select('revenue, cost')
+    .gte('time', isoStart);
+
+  if (error) return dailySummary.textContent = "Error loading daily totals.";
+
+  const totalRevenue = data.reduce((s, i) => s + Number(i.revenue || 0), 0);
+  const totalCost = data.reduce((s, i) => s + Number(i.cost || 0), 0);
+  dailySummary.textContent = `📊 Today — Revenue: $${totalRevenue.toFixed(2)} | Cost: $${totalCost.toFixed(2)} | Profit: $${(totalRevenue - totalCost).toFixed(2)}`;
+}
+
+document.getElementById('view-sales-btn').addEventListener('click', () => {
+  window.location.href = "sales_history.html";
+});
+
+fetchProducts();
+fetchDailySummary();
+</script>
 </body>
 </html>

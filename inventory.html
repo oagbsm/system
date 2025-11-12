@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventory | Mato POS</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.80.0/dist/umd/supabase.min.js"></script>
+
+<style>
+body { font-family: Arial; background: #f5f5f5; margin: 0; padding: 0; }
+nav.top-nav { display: flex; justify-content: space-between; align-items: center; background: #e60000; color: white; padding: 10px 20px; position: sticky; top: 0; z-index: 1000; }
+nav .nav-left { font-size: 1.3rem; font-weight: bold; }
+nav .nav-links { display: flex; gap: 18px; }
+nav .nav-links a { color: white; text-decoration: none; font-weight: bold; padding-bottom: 3px; }
+nav .nav-links a.active { border-bottom: 2px solid #fff; }
+main { padding: 20px; max-width: 1200px; margin: auto; }
+h1 { text-align: center; margin-bottom: 20px; color: #d32f2f; }
+.category-section { margin-bottom: 30px; background: #fff; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); padding: 15px; }
+.category-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.category-title { font-size: 1.2rem; font-weight: bold; color: #e60000; }
+.category-header button { background: #1565c0; color: #fff; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; }
+.category-header button:hover { opacity: 0.85; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
+th { background: #f2f2f2; }
+td button { background: #e60000; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+td button:hover { opacity: 0.85; }
+.low-stock { background: #ffe6e6; }
+@media (max-width: 768px) { th, td { font-size: 14px; padding: 8px; } .category-title { font-size: 1rem; } }
+</style>
+</head>
+
+<body>
+
+<nav class="top-nav">
+  <div class="nav-left">🍅 Mato POS</div>
+  <div class="nav-links">
+    <a href="mato.html" id="nav-products">Products</a>
+    <a href="sales_history.html" id="nav-sales">Sales</a>
+    <a href="inventory.html" id="nav-inventory">Inventory</a>
+    <a href="crud.html" id="nav-edit">EDIT</a>
+  </div>
+</nav>
+
+<main>
+<h1>📦 Inventory</h1>
+<div id="inventory-container"></div>
+</main>
+
+<script>
+const { createClient } = supabase;
+const supabaseClient = createClient(
+  "https://ytqbwvqppawjtcpfozzo.supabase.co",
+ "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0cWJ3dnFwcGF3anRjcGZvenpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2OTQ5MTQsImV4cCI6MjA3ODI3MDkxNH0.G1Y-6FY1YNbueVPkctDU6UMDVahEa1kUvFi03tSOws0"
+);
+
+document.getElementById("nav-inventory").classList.add("active");
+
+// Load inventory grouped by category
+async function loadInventory() {
+  const { data, error } = await supabaseClient
+    .from('products')
+    .select('id, name, category, cost, stock')
+    .order('category', { ascending: true });
+
+  if (error) return alert("Error loading inventory: " + error.message);
+
+  const grouped = {};
+  data.forEach(item => {
+    const cat = item.category || 'Uncategorized';
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(item);
+  });
+
+  const container = document.getElementById("inventory-container");
+  container.innerHTML = "";
+
+  for (const [category, items] of Object.entries(grouped)) {
+    const section = document.createElement("div");
+    section.className = "category-section";
+
+    const header = document.createElement("div");
+    header.className = "category-header";
+
+    const title = document.createElement("div");
+    title.className = "category-title";
+    title.textContent = category;
+
+    const addBtn = document.createElement("button");
+    addBtn.textContent = "Add Product";
+    addBtn.onclick = () => addProductModal(category);
+
+    header.appendChild(title);
+    header.appendChild(addBtn);
+    section.appendChild(header);
+
+    const table = document.createElement("table");
+    const thead = document.createElement("thead");
+    thead.innerHTML = `<tr>
+      <th>Product</th><th>Stock</th><th>Cost</th><th>Stock Value</th><th>Adjust Stock</th>
+    </tr>`;
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+    items.forEach(p => {
+      const row = document.createElement("tr");
+      if ((p.stock ?? 0) < 5) row.classList.add("low-stock");
+      row.innerHTML = `
+        <td>${p.name}</td>
+        <td>${p.stock ?? 0}</td>
+        <td>$${p.cost.toFixed(2)}</td>
+        <td>$${(p.cost * (p.stock ?? 0)).toFixed(2)}</td>
+        <td>
+<button onclick="adjustStock(${p.id}, ${p.stock || 0}, true, '${p.name}', ${p.cost})">+ Add</button>
+          <button onclick="adjustStock(${p.id}, ${p.stock}, false, '${p.name}', ${p.cost})">- Remove</button>
+        </td>
+      `;
+      tbody.appendChild(row);
+    });
+    table.appendChild(tbody);
+    section.appendChild(table);
+    container.appendChild(section);
+  }
+}
+
+// Adjust stock in the database
+async function adjustStock(id, currentStock, add=true, name="", cost=0) {
+  const qty = parseFloat(prompt(`Enter quantity to ${add ? "add" : "remove"}:`));
+  if (!qty || qty <= 0) return alert("Invalid quantity");
+
+  const newStock = add ? currentStock + qty : Math.max(0, currentStock - qty);
+
+  // Update products table
+  const { error: stockError } = await supabaseClient
+    .from('products')
+    .update({ stock: newStock })
+    .eq('id', id);
+  if (stockError) return alert("Error updating stock: " + stockError.message);
+
+  // Log purchase if adding stock
+  if (add) {
+    const { error: purchaseError } = await supabaseClient
+      .from('purchases')
+      .insert([{ product_name: name, quantity: qty, cost_per_unit: cost }]);
+    if (purchaseError) return alert("Error logging purchase: " + purchaseError.message);
+  }
+
+  // Reload inventory after updating
+  loadInventory();
+}
+
+// Add product modal
+function addProductModal(category) {
+  const name = prompt(`Enter product name for category "${category}":`);
+  if (!name) return alert("Cancelled");
+
+  const cost = parseFloat(prompt("Enter cost price:"));
+  if (!cost || cost <= 0) return alert("Invalid cost");
+
+  const price = parseFloat(prompt("Enter selling price:"));
+  if (!price || price <= 0) return alert("Invalid price");
+
+  const stock = parseFloat(prompt("Enter initial stock (default 0):")) || 0;
+
+  supabaseClient.from('products').insert([{ name, category, cost, price, stock }])
+    .then(({ error }) => {
+      if (error) return alert("Error adding product: " + error.message);
+      loadInventory();
+    });
+}
+
+// Load inventory initially
+loadInventory();
+</script>
+</body>
+</html>
